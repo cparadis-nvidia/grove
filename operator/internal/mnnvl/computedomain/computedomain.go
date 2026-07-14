@@ -26,6 +26,7 @@ import (
 	"github.com/ai-dynamo/grove/operator/internal/constants"
 	"github.com/ai-dynamo/grove/operator/internal/controller/common/component"
 	groveerr "github.com/ai-dynamo/grove/operator/internal/errors"
+	"github.com/ai-dynamo/grove/operator/internal/eventrecorder"
 	"github.com/ai-dynamo/grove/operator/internal/mnnvl"
 	"github.com/ai-dynamo/grove/operator/internal/utils"
 	k8sutils "github.com/ai-dynamo/grove/operator/internal/utils/kubernetes"
@@ -172,7 +173,7 @@ func (r _resource) doCreate(ctx context.Context, logger logr.Logger, pcs *grovec
 		)
 	}
 
-	component.RecordCreateOrPatchSuccessEvent(r.eventRecorder, pcs, opResult, constants.ReasonComputeDomainCreateSuccessful,
+	eventrecorder.CreateOrPatchSuccess(r.eventRecorder, pcs, opResult, constants.ReasonComputeDomainCreateSuccessful,
 		"ComputeDomain %v created successfully", cdObjKey)
 	logger.Info("Created ComputeDomain for PodCliqueSet", "pcs", pcsObjKey, "cdObjectKey", cdObjKey, "result", opResult)
 	return nil

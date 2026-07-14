@@ -30,6 +30,7 @@ import (
 	"github.com/ai-dynamo/grove/operator/internal/controller/common/component"
 	componentutils "github.com/ai-dynamo/grove/operator/internal/controller/common/component/utils"
 	groveerr "github.com/ai-dynamo/grove/operator/internal/errors"
+	"github.com/ai-dynamo/grove/operator/internal/eventrecorder"
 	"github.com/ai-dynamo/grove/operator/internal/mnnvl"
 	"github.com/ai-dynamo/grove/operator/internal/utils"
 	k8sutils "github.com/ai-dynamo/grove/operator/internal/utils/kubernetes"
@@ -277,7 +278,7 @@ func (r _resource) doCreateOrUpdate(ctx context.Context, logger logr.Logger, pcs
 		)
 	}
 
-	component.RecordCreateOrPatchSuccessEvent(r.eventRecorder, pcs, opResult, constants.ReasonPodCliqueCreateOrUpdateSuccessful, "PodClique %v created or updated successfully", pclqObjectKey)
+	eventrecorder.CreateOrPatchSuccess(r.eventRecorder, pcs, opResult, constants.ReasonPodCliqueCreateOrUpdateSuccessful, "PodClique %v created or updated successfully", pclqObjectKey)
 	logger.Info("triggered create or update of PodClique for PodCliqueSet", "pcs", pcsObjKey, "pclqObjectKey", pclqObjectKey, "result", opResult)
 	return nil
 }

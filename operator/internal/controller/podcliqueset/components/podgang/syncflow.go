@@ -28,6 +28,7 @@ import (
 	"github.com/ai-dynamo/grove/operator/internal/controller/common/component"
 	componentutils "github.com/ai-dynamo/grove/operator/internal/controller/common/component/utils"
 	groveerr "github.com/ai-dynamo/grove/operator/internal/errors"
+	"github.com/ai-dynamo/grove/operator/internal/eventrecorder"
 	k8sutils "github.com/ai-dynamo/grove/operator/internal/utils/kubernetes"
 
 	groveschedulerv1alpha1 "github.com/ai-dynamo/grove/scheduler/api/core/v1alpha1"
@@ -628,7 +629,7 @@ func (r _resource) createOrUpdatePodGang(ctx context.Context, sc *syncContext, p
 		}
 	}
 
-	component.RecordCreateOrPatchSuccessEvent(r.eventRecorder, sc.pcs, opResult, constants.ReasonPodGangCreateOrUpdateSuccessful, "Created/Updated PodGang %v", pgObjectKey)
+	eventrecorder.CreateOrPatchSuccess(r.eventRecorder, sc.pcs, opResult, constants.ReasonPodGangCreateOrUpdateSuccessful, "Created/Updated PodGang %v", pgObjectKey)
 	sc.logger.Info("Triggered CreateOrPatch of PodGang", "objectKey", pgObjectKey)
 	return nil
 }
