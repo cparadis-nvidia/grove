@@ -26,6 +26,7 @@ import (
 	apiconstants "github.com/ai-dynamo/grove/operator/api/common/constants"
 	grovecorev1alpha1 "github.com/ai-dynamo/grove/operator/api/core/v1alpha1"
 	groveclientscheme "github.com/ai-dynamo/grove/operator/internal/client"
+	"github.com/ai-dynamo/grove/operator/internal/eventrecorder"
 	"github.com/ai-dynamo/grove/operator/internal/constants"
 	"github.com/ai-dynamo/grove/operator/internal/controller/common/component"
 	groveerr "github.com/ai-dynamo/grove/operator/internal/errors"
@@ -52,7 +53,7 @@ func TestNew(t *testing.T) {
 	require.NoError(t, grovecorev1alpha1.AddToScheme(scheme))
 
 	client := fake.NewClientBuilder().WithScheme(scheme).Build()
-	eventRecorder := &record.FakeRecorder{}
+	eventRecorder := eventrecorder.NewTest(&record.FakeRecorder{})
 
 	operator := New(client, scheme, eventRecorder)
 
@@ -586,7 +587,7 @@ func TestDelete(t *testing.T) {
 
 			r := &_resource{
 				client:        fakeClient,
-				eventRecorder: &record.FakeRecorder{},
+				eventRecorder: eventrecorder.NewTest(&record.FakeRecorder{}),
 			}
 
 			err := r.Delete(ctx, logger, tc.pcsgObjMeta)
@@ -1061,7 +1062,7 @@ func TestBuildResource_MNNVLInjection(t *testing.T) {
 			operator := &_resource{
 				client:        nil, // not needed for buildResource
 				scheme:        scheme,
-				eventRecorder: &record.FakeRecorder{},
+				eventRecorder: eventrecorder.NewTest(&record.FakeRecorder{}),
 			}
 
 			err := operator.buildResource(logr.Discard(), pcs, pcsg, pcsgReplicaIndex, pclq, false)

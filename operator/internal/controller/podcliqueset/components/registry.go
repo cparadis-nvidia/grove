@@ -32,14 +32,14 @@ import (
 	"github.com/ai-dynamo/grove/operator/internal/controller/podcliqueset/components/service"
 	"github.com/ai-dynamo/grove/operator/internal/controller/podcliqueset/components/serviceaccount"
 	"github.com/ai-dynamo/grove/operator/internal/mnnvl/computedomain"
+	"github.com/ai-dynamo/grove/operator/internal/eventrecorder"
 	"github.com/ai-dynamo/grove/operator/internal/scheduler"
 
-	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 // CreateOperatorRegistry initializes the operator registry for the PodCliqueSet reconciler
-func CreateOperatorRegistry(mgr manager.Manager, eventRecorder record.EventRecorder, topologyAwareSchedulingConfig configv1alpha1.TopologyAwareSchedulingConfiguration, networkConfig configv1alpha1.NetworkAcceleration, schedRegistry scheduler.Registry) component.OperatorRegistry[v1alpha1.PodCliqueSet] {
+func CreateOperatorRegistry(mgr manager.Manager, eventRecorder *eventrecorder.Client, topologyAwareSchedulingConfig configv1alpha1.TopologyAwareSchedulingConfiguration, networkConfig configv1alpha1.NetworkAcceleration, schedRegistry scheduler.Registry) component.OperatorRegistry[v1alpha1.PodCliqueSet] {
 	cl := mgr.GetClient()
 	reg := component.NewOperatorRegistry[v1alpha1.PodCliqueSet]()
 	reg.Register(component.KindPodClique, podclique.New(cl, mgr.GetScheme(), eventRecorder))

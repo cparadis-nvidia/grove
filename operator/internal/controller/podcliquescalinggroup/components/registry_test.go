@@ -21,6 +21,7 @@ import (
 
 	grovecorev1alpha1 "github.com/ai-dynamo/grove/operator/api/core/v1alpha1"
 	"github.com/ai-dynamo/grove/operator/internal/controller/common/component"
+	"github.com/ai-dynamo/grove/operator/internal/eventrecorder"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,7 +43,7 @@ func TestCreateOperatorRegistry(t *testing.T) {
 	t.Run("creates registry with podclique operator", func(t *testing.T) {
 		cl := fake.NewClientBuilder().WithScheme(scheme).Build()
 		mgr := &mockManager{client: cl, scheme: scheme}
-		eventRecorder := record.NewFakeRecorder(10)
+		eventRecorder := eventrecorder.NewTest(record.NewFakeRecorder(10))
 
 		registry := CreateOperatorRegistry(mgr, eventRecorder)
 

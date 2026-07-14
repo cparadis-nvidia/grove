@@ -25,6 +25,7 @@ import (
 	apicommon "github.com/ai-dynamo/grove/operator/api/common"
 	grovecorev1alpha1 "github.com/ai-dynamo/grove/operator/api/core/v1alpha1"
 	"github.com/ai-dynamo/grove/operator/internal/constants"
+	"github.com/ai-dynamo/grove/operator/internal/eventrecorder"
 	"github.com/ai-dynamo/grove/operator/internal/mnnvl"
 	testutils "github.com/ai-dynamo/grove/operator/test/utils"
 
@@ -71,7 +72,7 @@ var testScheme = func() *runtime.Scheme {
 
 func TestNew(t *testing.T) {
 	cl := createTestClient()
-	operator := New(cl, testScheme, record.NewFakeRecorder(10))
+	operator := New(cl, testScheme, eventrecorder.NewTest(record.NewFakeRecorder(10)))
 	assert.NotNil(t, operator)
 }
 
@@ -386,7 +387,7 @@ func TestSyncSkipsWhenMNNVLNotEnabled(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			// Create a client that fails on List - proves we skipped before listing
 			cl := createClientThatFailsOnList()
-			operator := New(cl, testScheme, record.NewFakeRecorder(10))
+			operator := New(cl, testScheme, eventrecorder.NewTest(record.NewFakeRecorder(10)))
 
 			err := operator.Sync(context.Background(), logr.Discard(), tc.pcs)
 
@@ -419,7 +420,7 @@ func TestSyncCreatesComputeDomains(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			pcs := createPCSWithMNNVLEnabled(tc.replicas)
 			cl := createTestClient()
-			operator := New(cl, testScheme, record.NewFakeRecorder(10))
+			operator := New(cl, testScheme, eventrecorder.NewTest(record.NewFakeRecorder(10)))
 
 			err := operator.Sync(context.Background(), logr.Discard(), pcs)
 
@@ -462,7 +463,7 @@ func TestSyncScaleIn(t *testing.T) {
 	pcs := createPCSWithMNNVLEnabled(2)
 	existingCDs := createTestCDs("default", 4)
 	cl := createTestClientWithCDs(existingCDs)
-	operator := New(cl, testScheme, record.NewFakeRecorder(10))
+	operator := New(cl, testScheme, eventrecorder.NewTest(record.NewFakeRecorder(10)))
 
 	err := operator.Sync(context.Background(), logr.Discard(), pcs)
 
@@ -491,7 +492,7 @@ func TestSyncScaleOut(t *testing.T) {
 	pcs := createPCSWithMNNVLEnabled(4)
 	existingCDs := createTestCDs("default", 2)
 	cl := createTestClientWithCDs(existingCDs)
-	operator := New(cl, testScheme, record.NewFakeRecorder(10))
+	operator := New(cl, testScheme, eventrecorder.NewTest(record.NewFakeRecorder(10)))
 
 	err := operator.Sync(context.Background(), logr.Discard(), pcs)
 
@@ -510,7 +511,7 @@ func TestSyncScaleOut(t *testing.T) {
 func TestSyncIdempotent(t *testing.T) {
 	pcs := createPCSWithMNNVLEnabled(3)
 	cl := createTestClient()
-	operator := New(cl, testScheme, record.NewFakeRecorder(10))
+	operator := New(cl, testScheme, eventrecorder.NewTest(record.NewFakeRecorder(10)))
 
 	// First sync
 	err := operator.Sync(context.Background(), logr.Discard(), pcs)
@@ -535,7 +536,7 @@ func TestSyncWithGroupAnnotation(t *testing.T) {
 	pcs.Annotations = map[string]string{mnnvl.AnnotationMNNVLGroup: "workers"}
 
 	cl := createTestClient()
-	operator := New(cl, testScheme, record.NewFakeRecorder(10))
+	operator := New(cl, testScheme, eventrecorder.NewTest(record.NewFakeRecorder(10)))
 
 	err := operator.Sync(context.Background(), logr.Discard(), pcs)
 	require.NoError(t, err)
@@ -576,7 +577,7 @@ func TestSyncMultipleGroups(t *testing.T) {
 	})
 
 	cl := createTestClient()
-	operator := New(cl, testScheme, record.NewFakeRecorder(10))
+	operator := New(cl, testScheme, eventrecorder.NewTest(record.NewFakeRecorder(10)))
 
 	err := operator.Sync(context.Background(), logr.Discard(), pcs)
 	require.NoError(t, err)
@@ -616,7 +617,7 @@ func TestSyncMultipleGroupsScaleDown(t *testing.T) {
 	workerCDs := createTestCDs("workers", 3)
 	allCDs := append(defaultCDs, workerCDs...)
 	cl := createTestClientWithCDs(allCDs)
-	operator := New(cl, testScheme, record.NewFakeRecorder(10))
+	operator := New(cl, testScheme, eventrecorder.NewTest(record.NewFakeRecorder(10)))
 
 	err := operator.Sync(context.Background(), logr.Discard(), pcs)
 	require.NoError(t, err)
@@ -654,7 +655,7 @@ func TestDeleteRemovesAllComputeDomains(t *testing.T) {
 		builder.WithObjects(cd)
 	}
 	cl := builder.Build()
-	operator := New(cl, testScheme, record.NewFakeRecorder(10))
+	operator := New(cl, testScheme, eventrecorder.NewTest(record.NewFakeRecorder(10)))
 
 	pcsObjMeta := metav1.ObjectMeta{
 		Name:      testPCSName,

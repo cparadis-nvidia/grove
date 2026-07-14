@@ -29,6 +29,7 @@ import (
 	"github.com/ai-dynamo/grove/operator/internal/controller/common/component"
 	componentutils "github.com/ai-dynamo/grove/operator/internal/controller/common/component/utils"
 	groveerr "github.com/ai-dynamo/grove/operator/internal/errors"
+	"github.com/ai-dynamo/grove/operator/internal/eventrecorder"
 	"github.com/ai-dynamo/grove/operator/internal/scheduler"
 	k8sutils "github.com/ai-dynamo/grove/operator/internal/utils/kubernetes"
 
@@ -38,7 +39,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -60,13 +60,13 @@ const (
 type _resource struct {
 	client        client.Client
 	scheme        *runtime.Scheme
-	eventRecorder record.EventRecorder
+	eventRecorder *eventrecorder.Client
 	tasConfig     configv1alpha1.TopologyAwareSchedulingConfiguration
 	schedRegistry scheduler.Registry
 }
 
 // New creates a new instance of PodGang components operator.
-func New(client client.Client, scheme *runtime.Scheme, eventRecorder record.EventRecorder, tasConfig configv1alpha1.TopologyAwareSchedulingConfiguration, schedRegistry scheduler.Registry) component.Operator[grovecorev1alpha1.PodCliqueSet] {
+func New(client client.Client, scheme *runtime.Scheme, eventRecorder *eventrecorder.Client, tasConfig configv1alpha1.TopologyAwareSchedulingConfiguration, schedRegistry scheduler.Registry) component.Operator[grovecorev1alpha1.PodCliqueSet] {
 	return &_resource{
 		client:        client,
 		scheme:        scheme,

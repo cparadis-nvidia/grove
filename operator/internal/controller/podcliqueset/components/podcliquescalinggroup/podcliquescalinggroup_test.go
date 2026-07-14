@@ -23,6 +23,7 @@ import (
 	apicommon "github.com/ai-dynamo/grove/operator/api/common"
 	grovecorev1alpha1 "github.com/ai-dynamo/grove/operator/api/core/v1alpha1"
 	"github.com/ai-dynamo/grove/operator/internal/mnnvl"
+	"github.com/ai-dynamo/grove/operator/internal/eventrecorder"
 
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
@@ -43,7 +44,7 @@ func TestNew(t *testing.T) {
 	require.NoError(t, grovecorev1alpha1.AddToScheme(scheme))
 
 	client := fake.NewClientBuilder().WithScheme(scheme).Build()
-	eventRecorder := &record.FakeRecorder{}
+	eventRecorder := eventrecorder.NewTest(&record.FakeRecorder{})
 
 	operator := New(client, scheme, eventRecorder)
 
@@ -281,7 +282,7 @@ func TestSync(t *testing.T) {
 			r := &_resource{
 				client:        fakeClient,
 				scheme:        scheme,
-				eventRecorder: &record.FakeRecorder{},
+				eventRecorder: eventrecorder.NewTest(&record.FakeRecorder{}),
 			}
 
 			err := r.Sync(ctx, logger, tc.pcs)
@@ -368,7 +369,7 @@ func TestDelete(t *testing.T) {
 
 			r := &_resource{
 				client:        fakeClient,
-				eventRecorder: &record.FakeRecorder{},
+				eventRecorder: eventrecorder.NewTest(&record.FakeRecorder{}),
 			}
 
 			err := r.Delete(ctx, logger, tc.pcsObjMeta)

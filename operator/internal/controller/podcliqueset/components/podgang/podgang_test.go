@@ -24,6 +24,7 @@ import (
 	configv1alpha1 "github.com/ai-dynamo/grove/operator/api/config/v1alpha1"
 	grovecorev1alpha1 "github.com/ai-dynamo/grove/operator/api/core/v1alpha1"
 	"github.com/ai-dynamo/grove/operator/internal/scheduler"
+	"github.com/ai-dynamo/grove/operator/internal/eventrecorder"
 	"github.com/ai-dynamo/grove/operator/internal/scheduler/lpx"
 	testutils "github.com/ai-dynamo/grove/operator/test/utils"
 
@@ -316,7 +317,7 @@ func TestBuildResource(t *testing.T) {
 			r := &_resource{
 				client:        fakeClient,
 				scheme:        scheme,
-				eventRecorder: record.NewFakeRecorder(10),
+				eventRecorder: eventrecorder.NewTest(record.NewFakeRecorder(10)),
 				tasConfig: configv1alpha1.TopologyAwareSchedulingConfiguration{
 					Enabled: test.tasEnabled,
 				},

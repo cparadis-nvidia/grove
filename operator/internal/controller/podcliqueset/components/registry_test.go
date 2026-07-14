@@ -22,6 +22,7 @@ import (
 	groveconfigv1alpha1 "github.com/ai-dynamo/grove/operator/api/config/v1alpha1"
 	grovecorev1alpha1 "github.com/ai-dynamo/grove/operator/api/core/v1alpha1"
 	"github.com/ai-dynamo/grove/operator/internal/controller/common/component"
+	"github.com/ai-dynamo/grove/operator/internal/eventrecorder"
 	"github.com/ai-dynamo/grove/operator/test/utils"
 
 	groveschedulerv1alpha1 "github.com/ai-dynamo/grove/scheduler/api/core/v1alpha1"
@@ -51,7 +52,7 @@ func TestCreateOperatorRegistry(t *testing.T) {
 	t.Run("creates registry without ComputeDomain when MNNVL is disabled", func(t *testing.T) {
 		cl := fake.NewClientBuilder().WithScheme(scheme).Build()
 		mgr := &mockManager{client: cl, scheme: scheme}
-		eventRecorder := record.NewFakeRecorder(10)
+		eventRecorder := eventrecorder.NewTest(record.NewFakeRecorder(10))
 
 		registry := CreateOperatorRegistry(mgr, eventRecorder, groveconfigv1alpha1.TopologyAwareSchedulingConfiguration{}, groveconfigv1alpha1.NetworkAcceleration{
 			AutoMNNVLEnabled: false,
@@ -92,7 +93,7 @@ func TestCreateOperatorRegistry(t *testing.T) {
 	t.Run("creates registry with ComputeDomain when MNNVL is enabled", func(t *testing.T) {
 		cl := fake.NewClientBuilder().WithScheme(scheme).Build()
 		mgr := &mockManager{client: cl, scheme: scheme}
-		eventRecorder := record.NewFakeRecorder(10)
+		eventRecorder := eventrecorder.NewTest(record.NewFakeRecorder(10))
 
 		registry := CreateOperatorRegistry(mgr, eventRecorder, groveconfigv1alpha1.TopologyAwareSchedulingConfiguration{}, groveconfigv1alpha1.NetworkAcceleration{
 			AutoMNNVLEnabled: true,
@@ -130,7 +131,7 @@ func TestCreateOperatorRegistry(t *testing.T) {
 	t.Run("verifies key operator registrations", func(t *testing.T) {
 		cl := fake.NewClientBuilder().WithScheme(scheme).Build()
 		mgr := &mockManager{client: cl, scheme: scheme}
-		eventRecorder := record.NewFakeRecorder(10)
+		eventRecorder := eventrecorder.NewTest(record.NewFakeRecorder(10))
 
 		registry := CreateOperatorRegistry(mgr, eventRecorder, groveconfigv1alpha1.TopologyAwareSchedulingConfiguration{}, groveconfigv1alpha1.NetworkAcceleration{
 			AutoMNNVLEnabled: false,

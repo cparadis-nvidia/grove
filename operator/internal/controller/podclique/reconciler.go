@@ -27,6 +27,7 @@ import (
 	componentutils "github.com/ai-dynamo/grove/operator/internal/controller/common/component/utils"
 	pclqcomponent "github.com/ai-dynamo/grove/operator/internal/controller/podclique/components"
 	ctrlutils "github.com/ai-dynamo/grove/operator/internal/controller/utils"
+	"github.com/ai-dynamo/grove/operator/internal/eventrecorder"
 	"github.com/ai-dynamo/grove/operator/internal/expect"
 	"github.com/ai-dynamo/grove/operator/internal/scheduler"
 
@@ -49,7 +50,7 @@ type Reconciler struct {
 
 // NewReconciler creates a new instance of the PodClique Reconciler.
 func NewReconciler(mgr ctrl.Manager, controllerCfg configv1alpha1.PodCliqueControllerConfiguration, schedRegistry scheduler.Registry) *Reconciler {
-	eventRecorder := mgr.GetEventRecorderFor(controllerName)
+	eventRecorder := eventrecorder.ForManager(mgr, controllerName)
 	expectationsStore := expect.NewExpectationsStore()
 	return &Reconciler{
 		config:                  controllerCfg,

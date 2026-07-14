@@ -24,6 +24,7 @@ import (
 	apiconstants "github.com/ai-dynamo/grove/operator/api/common/constants"
 	grovecorev1alpha1 "github.com/ai-dynamo/grove/operator/api/core/v1alpha1"
 	groveclientscheme "github.com/ai-dynamo/grove/operator/internal/client"
+	"github.com/ai-dynamo/grove/operator/internal/eventrecorder"
 	"github.com/ai-dynamo/grove/operator/internal/constants"
 	"github.com/ai-dynamo/grove/operator/internal/controller/common/component"
 	groveerr "github.com/ai-dynamo/grove/operator/internal/errors"
@@ -112,7 +113,7 @@ func TestGetExistingResourceNames(t *testing.T) {
 			existingObjects := createExistingPodCliquesFromPCS(pcs, tc.podCliqueNamesNotOwnedByPCS)
 			// Create a fake client with PodCliques
 			cl := testutils.CreateFakeClientForObjectsMatchingLabels(nil, tc.listErr, pcs.Namespace, grovecorev1alpha1.SchemeGroupVersion.WithKind("PodClique"), getPodCliqueSelectorLabels(pcs.ObjectMeta), existingObjects...)
-			operator := New(cl, groveclientscheme.Scheme, record.NewFakeRecorder(10))
+			operator := New(cl, groveclientscheme.Scheme, eventrecorder.NewTest(record.NewFakeRecorder(10)))
 			actualPCLQNames, err := operator.GetExistingResourceNames(context.Background(), logr.Discard(), pcs.ObjectMeta)
 			if tc.expectedErr == nil {
 				assert.NoError(t, err)
@@ -165,7 +166,7 @@ func TestDelete(t *testing.T) {
 			existingPodCliques := createDefaultPodCliques(pcsObjMeta, "howl", tc.numExistingPodCliques)
 			// Create a fake client with PodCliques
 			cl := testutils.CreateFakeClientForObjectsMatchingLabels(tc.deleteError, nil, testPCSNamespace, grovecorev1alpha1.SchemeGroupVersion.WithKind("PodClique"), getPodCliqueSelectorLabels(pcsObjMeta), existingPodCliques...)
-			operator := New(cl, groveclientscheme.Scheme, record.NewFakeRecorder(10))
+			operator := New(cl, groveclientscheme.Scheme, eventrecorder.NewTest(record.NewFakeRecorder(10)))
 			err := operator.Delete(context.Background(), logr.Discard(), pcsObjMeta)
 			if tc.expectedError != nil {
 				testutils.CheckGroveError(t, tc.expectedError, err)
@@ -455,7 +456,7 @@ func TestBuildResource_MNNVLInjection(t *testing.T) {
 			operator := &_resource{
 				client:        nil, // not needed for buildResource
 				scheme:        groveclientscheme.Scheme,
-				eventRecorder: record.NewFakeRecorder(10),
+				eventRecorder: eventrecorder.NewTest(record.NewFakeRecorder(10)),
 			}
 
 			err := operator.buildResource(logr.Discard(), pclq, pcs, pcsReplica, false)
