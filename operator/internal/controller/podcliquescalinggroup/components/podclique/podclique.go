@@ -74,7 +74,7 @@ var (
 type _resource struct {
 	client        client.Client
 	scheme        *runtime.Scheme
-	eventRecorder record.EventRecorder
+	eventRecorder *eventrecorder.Client
 }
 
 // New creates a new PodClique operator for managing PodClique resources within PodCliqueScalingGroups
@@ -82,7 +82,7 @@ func New(client client.Client, scheme *runtime.Scheme, eventRecorder record.Even
 	return &_resource{
 		client:        client,
 		scheme:        scheme,
-		eventRecorder: eventRecorder,
+		eventRecorder: eventrecorder.New(eventRecorder, eventrecorder.DefaultConfig()),
 	}
 }
 
@@ -277,7 +277,7 @@ func (r _resource) doCreateOrUpdate(ctx context.Context, logger logr.Logger, pcs
 		)
 	}
 
-	eventrecorder.CreateOrPatchSuccess(r.eventRecorder, pcsg, opResult, constants.ReasonPodCliqueCreateOrUpdateSuccessful, "PodClique %v created or updated successfully", pclqObjectKey)
+	r.eventRecorder.CreateOrPatchSuccess(pcsg, opResult, constants.ReasonPodCliqueCreateOrUpdateSuccessful, "PodClique %v created or updated successfully", pclqObjectKey)
 	logger.Info("Triggered create or update of PodClique for PodCliqueScalingGroup", "pcsgObjKey", pcsgObjKey, "pclqObjectKey", pclqObjectKey, "result", opResult)
 	return nil
 }

@@ -67,25 +67,19 @@ func (c *Client) AnnotatedEventf(object runtime.Object, annotations map[string]s
 	c.delegate.AnnotatedEventf(object, annotations, eventType, reason, messageFmt, args...)
 }
 
-var defaultCreateOrPatchLimiter = struct {
-	config   Config
-	limiters map[int]*eventRateLimiter
-}{
-	config:   DefaultConfig(),
-	limiters: newLimiters(DefaultConfig()),
+// NewTest returns a Client with no rate-limit rules for unit tests.
+func NewTest(delegate record.EventRecorder) *Client {
+	return New(delegate, Config{})
 }
 
 // CreateOrPatchSuccess records a Normal success event for a CreateOrPatch reconcile result.
 //
 // Actual state changes are always recorded. Steady-state reconciles are throttled according to
-// DefaultConfig rules without requiring callers to wrap their recorder in a Client.
-func CreateOrPatchSuccess(recorder record.EventRecorder, object runtime.Object, opResult controllerutil.OperationResult, reason, messageFmt string, args ...any) {
+// the client's configured rules.
+func (c *Client) CreateOrPatchSuccess(object runtime.Object, opResult controllerutil.OperationResult, reason, messageFmt string, args ...any) {
 	if opResult != controllerutil.OperationResultNone {
-		recorder.Eventf(object, corev1.EventTypeNormal, reason, messageFmt, args...)
+		c.delegate.Eventf(object, corev1.EventTypeNormal, reason, messageFmt, args...)
 		return
 	}
-	if !allowEvent(defaultCreateOrPatchLimiter.config, defaultCreateOrPatchLimiter.limiters, object, corev1.EventTypeNormal, reason) {
-		return
-	}
-	recorder.Eventf(object, corev1.EventTypeNormal, reason, messageFmt, args...)
+	c.Eventf(object, corev1.EventTypeNormal, reason, messageFmt, args...)
 }

@@ -40,21 +40,12 @@ func testConfig() Config {
 	}
 }
 
-func withFakeClock(t *testing.T) *time.Time {
+func testClient(t *testing.T, delegate record.EventRecorder) (*Client, *time.Time) {
 	t.Helper()
-	previousLimiters := defaultCreateOrPatchLimiter.limiters
-	previousConfig := defaultCreateOrPatchLimiter.config
-	t.Cleanup(func() {
-		defaultCreateOrPatchLimiter.limiters = previousLimiters
-		defaultCreateOrPatchLimiter.config = previousConfig
-	})
-
+	client := New(delegate, testConfig())
 	now := time.Now()
-	cfg := testConfig()
-	defaultCreateOrPatchLimiter.config = cfg
-	defaultCreateOrPatchLimiter.limiters = newLimiters(cfg)
-	defaultCreateOrPatchLimiter.limiters[0].now = func() time.Time { return now }
-	return &now
+	client.limiters[0].now = func() time.Time { return now }
+	return client, &now
 }
 
 func drainEvent(t *testing.T, recorder *record.FakeRecorder) (string, bool) {
@@ -78,13 +69,13 @@ func TestCreateOrPatchSuccess_ActualChangesAlwaysRecorded(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			withFakeClock(t)
-			recorder := record.NewFakeRecorder(10)
+			delegate := record.NewFakeRecorder(10)
+			client, _ := testClient(t, delegate)
 			obj := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
 
 			for i := 0; i < 3; i++ {
-				CreateOrPatchSuccess(recorder, obj, tc.opResult, "Synced", "synced %s", obj.Name)
-				event, ok := drainEvent(t, recorder)
+				client.CreateOrPatchSuccess(obj, tc.opResult, "Synced", "synced %s", obj.Name)
+				event, ok := drainEvent(t, delegate)
 				assert.True(t, ok, "expected an event on iteration %d", i)
 				assert.Equal(t, "Normal Synced synced test", event)
 			}
@@ -93,53 +84,52 @@ func TestCreateOrPatchSuccess_ActualChangesAlwaysRecorded(t *testing.T) {
 }
 
 func TestCreateOrPatchSuccess_NoopRateLimited(t *testing.T) {
-	now := withFakeClock(t)
-	recorder := record.NewFakeRecorder(10)
+	delegate := record.NewFakeRecorder(10)
+	client, now := testClient(t, delegate)
 	obj := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
 
 	emit := func() {
-		CreateOrPatchSuccess(recorder, obj, controllerutil.OperationResultNone, "Synced", "synced %s", obj.Name)
+		client.CreateOrPatchSuccess(obj, controllerutil.OperationResultNone, "Synced", "synced %s", obj.Name)
 	}
 
 	emit()
-	event, ok := drainEvent(t, recorder)
+	event, ok := drainEvent(t, delegate)
 	assert.True(t, ok, "expected the first no-op event to be recorded")
 	assert.Equal(t, "Normal Synced synced test", event)
 
 	for i := 0; i < 5; i++ {
 		emit()
-		_, ok := drainEvent(t, recorder)
+		_, ok := drainEvent(t, delegate)
 		assert.False(t, ok, "did not expect a throttled no-op event on iteration %d", i)
 	}
 
 	*now = now.Add(defaultNoopSuccessEventInterval + time.Second)
 	emit()
-	event, ok = drainEvent(t, recorder)
+	event, ok = drainEvent(t, delegate)
 	assert.True(t, ok, "expected a no-op event after the interval elapsed")
 	assert.Equal(t, "Normal Synced synced test", event)
 }
 
 func TestCreateOrPatchSuccess_DistinctKeysLimitedIndependently(t *testing.T) {
-	withFakeClock(t)
-	recorder := record.NewFakeRecorder(10)
+	delegate := record.NewFakeRecorder(10)
+	client, _ := testClient(t, delegate)
 	objA := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "a"}}
 	objB := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "b"}}
 
-	CreateOrPatchSuccess(recorder, objA, controllerutil.OperationResultNone, "Synced", "synced")
-	CreateOrPatchSuccess(recorder, objB, controllerutil.OperationResultNone, "Synced", "synced")
+	client.CreateOrPatchSuccess(objA, controllerutil.OperationResultNone, "Synced", "synced")
+	client.CreateOrPatchSuccess(objB, controllerutil.OperationResultNone, "Synced", "synced")
 
-	_, ok := drainEvent(t, recorder)
+	_, ok := drainEvent(t, delegate)
 	assert.True(t, ok)
-	_, ok = drainEvent(t, recorder)
+	_, ok = drainEvent(t, delegate)
 	assert.True(t, ok)
-	_, ok = drainEvent(t, recorder)
+	_, ok = drainEvent(t, delegate)
 	assert.False(t, ok)
 }
 
 func TestClient_RateLimitsConfiguredEventType(t *testing.T) {
 	delegate := record.NewFakeRecorder(10)
-	client := New(delegate, testConfig())
-	client.limiters[0].now = func() time.Time { return time.Now() }
+	client, _ := testClient(t, delegate)
 	obj := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "test"}}
 
 	client.Eventf(obj, corev1.EventTypeNormal, "Synced", "first")

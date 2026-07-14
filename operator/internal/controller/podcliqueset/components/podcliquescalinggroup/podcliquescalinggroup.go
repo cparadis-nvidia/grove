@@ -53,7 +53,7 @@ const (
 type _resource struct {
 	client        client.Client
 	scheme        *runtime.Scheme
-	eventRecorder record.EventRecorder
+	eventRecorder *eventrecorder.Client
 }
 
 // New creates an instance of PodCliqueScalingGroup components operator.
@@ -61,7 +61,7 @@ func New(client client.Client, scheme *runtime.Scheme, eventRecorder record.Even
 	return &_resource{
 		client:        client,
 		scheme:        scheme,
-		eventRecorder: eventRecorder,
+		eventRecorder: eventrecorder.New(eventRecorder, eventrecorder.DefaultConfig()),
 	}
 }
 
@@ -185,7 +185,7 @@ func (r _resource) doCreateOrUpdate(ctx context.Context, logger logr.Logger, pcs
 		return err
 	}
 
-	eventrecorder.CreateOrPatchSuccess(r.eventRecorder, pcs, opResult, constants.ReasonPodCliqueScalingGroupCreateSuccessful, "Created PodCliqueScalingGroup %v", pcsgObjectKey)
+	r.eventRecorder.CreateOrPatchSuccess(pcs, opResult, constants.ReasonPodCliqueScalingGroupCreateSuccessful, "Created PodCliqueScalingGroup %v", pcsgObjectKey)
 	logger.Info("Created or updated PodCliqueScalingGroup", "objectKey", pcsgObjectKey)
 	return nil
 }
